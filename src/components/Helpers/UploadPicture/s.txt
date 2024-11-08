@@ -1,0 +1,155 @@
+/* eslint-disable react/style-prop-object */
+import React, { useState, useEffect, useContext } from "react";
+import Dropzone from "react-dropzone";
+import AvatarEditor from "react-avatar-editor";
+import Button from "../Button/Button";
+import { popupcontext } from "../../../context/Popupscontext";
+
+export default function ProfilePicture({ addData }) {
+  const { isEditing } = useContext(popupcontext);
+
+  const defaultImage =
+    "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_640.png"; // Default image
+  const [image, setImage] = useState(defaultImage); // Default to placeholder image
+
+  // Function to handle file upload from Dropzone
+  const handleDrop = async (acceptedFiles) => {
+    const file = acceptedFiles[0]; // Get the first uploaded file
+    console.log("FIle", file);
+    if (file) {
+      try {
+        const imageURL = URL.createObjectURL(file); // Create an object URL for the uploaded image
+        setImage(imageURL); // Set image preview using URL.createObjectURL
+        addData.setFieldValue("picture", [imageURL]); // Store the image URL in Formik, not the file object
+      } catch (error) {
+        console.error("Error uploading the image", error);
+      }
+    }
+  };
+
+  // Function to handle deleting the uploaded photo
+  const handleDelete = () => {
+    setImage(defaultImage); // Reset to the default image
+    addData.setFieldValue("picture", []); // Clear the Formik field
+  };
+
+  // Fetch local image on component mount (optional)
+  useEffect(() => {
+    setImage(addData.values.picture);
+  }, [setImage, addData.values.picture]); // Empty dependency array to run only once on mount
+
+  const currentImage = () => {
+    // Use the uploaded image if available, else fall back to the default image
+    if (addData.values.picture?.length > 0) {
+      return String(image); // Use the uploaded image URL
+    }
+    if (addData.values.picture === null) return defaultImage;
+    return String(image); // Fallback to the default or previously set image
+  };
+
+  return (
+    <div className="mb-24">
+      <Dropzone onDrop={handleDrop}>
+        {({ getRootProps, getInputProps, open }) => (
+          <div className="text-center">
+            <div {...getRootProps()} className="profile-picture-container">
+              <AvatarEditor
+                width={102}
+                height={102}
+                image={currentImage()} // Show the correct image based on the editing state and uploaded image
+                border={0}
+                className="profile-picture-container"
+              />
+              <input {...getInputProps()} />
+            </div>
+            <div className="text-center mt-2">
+              <Button
+                type="button"
+                style="button btn-success p-4-12"
+                text="Upload Image"
+                onClick={open} // Open dropzone when the button is clicked
+              />
+            </div>
+            {!addData.values.picture === null ||
+              (addData.values.picture?.length > 0 && (
+                <div className="text-center mt-2">
+                  <Button
+                    type="button"
+                    style="button btn-danger p-4-12"
+                    text="Delete Image"
+                    onClick={handleDelete} // Delete the uploaded image
+                  />
+                </div>
+              ))}
+          </div>
+        )}
+      </Dropzone>
+    </div>
+  );
+}
+/////////////////////////////////////
+
+/* eslint-disable react/style-prop-object */
+ 
+
+export default function ProfilePicture({ addData }) {
+  const { isEditing } = useContext(popupcontext);
+  const [image, setImage] = useState(
+    "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_640.png"
+  ); // Default image
+
+  // Function to handle file upload from Dropzone
+  const handleDrop = async (acceptedFiles) => {
+    const file = acceptedFiles[0]; // Get the first uploaded file
+    if (file) {
+      try {
+        // Update state and Formik field with the new file
+        setImage(URL.createObjectURL(file)); // Set image preview using URL.createObjectURL
+        addData.setFieldValue("picture", [file]); // Update Formik field with the file
+      } catch (error) {
+        console.error("Error uploading the image", error);
+      }
+    }
+  };
+
+  // Fetch local image on component mount (optional)
+  useEffect(() => {
+    const storedImage = sessionStorage.getItem("profileImage"); // Get the stored image data URL
+    if (storedImage) {
+      setImage(storedImage); // Set image state with the local storage image data URL
+    }
+  }, []); // Empty dependency array to run only once on mount
+
+  return (
+    <div className="mb-24">
+      <Dropzone onDrop={handleDrop}>
+        {({ getRootProps, getInputProps, open }) => (
+          <div className="text-center">
+            <div {...getRootProps()} className="profile-picture-container">
+              <AvatarEditor
+                width={102}
+                height={102}
+                image={
+                  isEditing 
+                    ? addData.values.picture
+                    : image
+                } // Display Formik image if editing, else show uploaded image
+                border={0}
+                className="profile-picture-container"
+              />
+              <input {...getInputProps()} />
+            </div>
+            <div className="text-center mt-2">
+              <Button
+                type="button"
+                style="button btn-success p-4-12"
+                text="Upload Image"
+                onClick={open} // Open dropzone when the button is clicked
+              />
+            </div>
+          </div>
+        )}
+      </Dropzone>
+    </div>
+  );
+}
